@@ -6,7 +6,7 @@ from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import RedirectResponse
 from typing import Dict, Any, Optional, List
 
-from ..database import activities_collection, teachers_collection
+from ..database import activities_collection, teachers_collection, DIFFICULTY_LEVELS
 
 router = APIRouter(
     prefix="/activities",
@@ -29,6 +29,14 @@ def get_activities(
     - end_time: Filter activities ending at or before this time (24-hour format, e.g., '17:00')
     - difficulty: Filter activities by difficulty level (e.g., 'beginner', 'intermediate', 'advanced', 'all')
     """
+    # Validate difficulty parameter
+    VALID_DIFFICULTY_LEVELS = DIFFICULTY_LEVELS + ['all']
+    if difficulty and difficulty not in VALID_DIFFICULTY_LEVELS:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"Invalid difficulty level. Must be one of: {', '.join(VALID_DIFFICULTY_LEVELS)}"
+        )
+    
     # Build the query based on provided filters
     query = {}
     

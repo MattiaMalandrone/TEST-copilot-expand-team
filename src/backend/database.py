@@ -5,6 +5,9 @@ MongoDB database configuration and setup for Mergington High School API
 from pymongo import MongoClient
 from argon2 import PasswordHasher
 
+# Constants
+DIFFICULTY_LEVELS = ['beginner', 'intermediate', 'advanced']
+
 # Connect to MongoDB
 client = MongoClient('mongodb://localhost:27017/')
 db = client['mergington_high']
