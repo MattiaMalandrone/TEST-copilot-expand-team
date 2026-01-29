@@ -3,24 +3,35 @@ document.addEventListener("DOMContentLoaded", () => {
   const darkModeToggle = document.getElementById("dark-mode-toggle");
   const darkModeIcon = document.getElementById("dark-mode-icon");
 
-  // Check for saved dark mode preference
-  const isDarkMode = localStorage.getItem("darkMode") === "true";
-  if (isDarkMode) {
-    document.body.classList.add("dark-mode");
-    darkModeIcon.textContent = "☀️";
-  }
+  // Only initialize dark mode if the toggle button exists
+  if (darkModeToggle && darkModeIcon) {
+    // Check for saved dark mode preference
+    try {
+      const isDarkMode = localStorage.getItem("darkMode") === "true";
+      if (isDarkMode) {
+        document.body.classList.add("dark-mode");
+        darkModeIcon.textContent = "☀️";
+      }
+    } catch (error) {
+      console.warn("Could not access localStorage for dark mode preference:", error);
+    }
 
-  // Toggle dark mode
-  darkModeToggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark-mode");
-    const isDark = document.body.classList.contains("dark-mode");
-    
-    // Update icon
-    darkModeIcon.textContent = isDark ? "☀️" : "🌙";
-    
-    // Save preference
-    localStorage.setItem("darkMode", isDark);
-  });
+    // Toggle dark mode
+    darkModeToggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+      
+      // Update icon
+      darkModeIcon.textContent = isDark ? "☀️" : "🌙";
+      
+      // Save preference
+      try {
+        localStorage.setItem("darkMode", isDark.toString());
+      } catch (error) {
+        console.warn("Could not save dark mode preference:", error);
+      }
+    });
+  }
 
   // DOM elements
   const activitiesList = document.getElementById("activities-list");
