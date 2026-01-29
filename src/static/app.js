@@ -519,23 +519,30 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
-    // Create share buttons
+    // Create share buttons with escaped activity name to prevent XSS
+    const escapeHtml = (text) => {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    };
+    const escapedName = escapeHtml(name);
+    
     const shareButtons = `
       <div class="share-container">
         <span class="share-label">Share:</span>
-        <button class="share-button share-facebook" data-activity="${name}" title="Share on Facebook">
+        <button class="share-button share-facebook" data-activity="${escapedName}" title="Share on Facebook" aria-label="Share ${escapedName} on Facebook">
           <span class="share-icon">f</span>
         </button>
-        <button class="share-button share-twitter" data-activity="${name}" title="Share on Twitter">
+        <button class="share-button share-twitter" data-activity="${escapedName}" title="Share on Twitter" aria-label="Share ${escapedName} on Twitter">
           <span class="share-icon">𝕏</span>
         </button>
-        <button class="share-button share-whatsapp" data-activity="${name}" title="Share on WhatsApp">
+        <button class="share-button share-whatsapp" data-activity="${escapedName}" title="Share on WhatsApp" aria-label="Share ${escapedName} on WhatsApp">
           <span class="share-icon">💬</span>
         </button>
-        <button class="share-button share-email" data-activity="${name}" title="Share via Email">
+        <button class="share-button share-email" data-activity="${escapedName}" title="Share via Email" aria-label="Share ${escapedName} via Email">
           <span class="share-icon">✉</span>
         </button>
-        <button class="share-button share-copy" data-activity="${name}" title="Copy link">
+        <button class="share-button share-copy" data-activity="${escapedName}" title="Copy link" aria-label="Copy link for ${escapedName}">
           <span class="share-icon">🔗</span>
         </button>
       </div>
@@ -912,17 +919,42 @@ document.addEventListener("DOMContentLoaded", () => {
       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
       window.open(whatsappUrl, '_blank');
     } else if (button.classList.contains('share-email')) {
-      // Email share
+      // Email share using temporary anchor element for better UX
       const emailSubject = encodeURIComponent(shareTitle);
       const emailBody = encodeURIComponent(`${shareText}\n\nLearn more: ${shareUrl}`);
-      window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+      const mailtoLink = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+      
+      // Create temporary anchor and click it
+      const anchor = document.createElement('a');
+      anchor.href = mailtoLink;
+      anchor.style.display = 'none';
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
     } else if (button.classList.contains('share-copy')) {
-      // Copy link to clipboard
-      navigator.clipboard.writeText(shareUrl).then(() => {
-        showMessage('Link copied to clipboard!', 'success');
-      }).catch(() => {
-        showMessage('Failed to copy link', 'error');
-      });
+      // Copy link to clipboard with fallback for older browsers
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(shareUrl).then(() => {
+          showMessage('Link copied to clipboard!', 'success');
+        }).catch(() => {
+          showMessage('Failed to copy link', 'error');
+        });
+      } else {
+        // Fallback for browsers without Clipboard API
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-999999px';
+        document.body.appendChild(textArea);
+        textArea.select();
+        try {
+          document.execCommand('copy');
+          showMessage('Link copied to clipboard!', 'success');
+        } catch (err) {
+          showMessage('Failed to copy link', 'error');
+        }
+        document.body.removeChild(textArea);
+      }
     }
   }
 
