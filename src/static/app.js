@@ -519,6 +519,28 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
     `;
 
+    // Create share buttons
+    const shareButtons = `
+      <div class="share-container">
+        <span class="share-label">Share:</span>
+        <button class="share-button share-facebook" data-activity="${name}" title="Share on Facebook">
+          <span class="share-icon">f</span>
+        </button>
+        <button class="share-button share-twitter" data-activity="${name}" title="Share on Twitter">
+          <span class="share-icon">𝕏</span>
+        </button>
+        <button class="share-button share-whatsapp" data-activity="${name}" title="Share on WhatsApp">
+          <span class="share-icon">💬</span>
+        </button>
+        <button class="share-button share-email" data-activity="${name}" title="Share via Email">
+          <span class="share-icon">✉</span>
+        </button>
+        <button class="share-button share-copy" data-activity="${name}" title="Copy link">
+          <span class="share-icon">🔗</span>
+        </button>
+      </div>
+    `;
+
     activityCard.innerHTML = `
       ${tagHtml}
       <h4>${name}</h4>
@@ -528,6 +550,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <span class="tooltip-text">Regular meetings at this time throughout the semester</span>
       </p>
       ${capacityIndicator}
+      ${shareButtons}
       <div class="participants-list">
         <h5>Current Participants:</h5>
         <ul>
@@ -575,6 +598,12 @@ document.addEventListener("DOMContentLoaded", () => {
     const deleteButtons = activityCard.querySelectorAll(".delete-participant");
     deleteButtons.forEach((button) => {
       button.addEventListener("click", handleUnregister);
+    });
+
+    // Add click handlers for share buttons
+    const shareButtonsElements = activityCard.querySelectorAll(".share-button");
+    shareButtonsElements.forEach((button) => {
+      button.addEventListener("click", handleShare);
     });
 
     // Add click handler for register button (only when authenticated)
@@ -854,6 +883,48 @@ document.addEventListener("DOMContentLoaded", () => {
       console.error("Error signing up:", error);
     }
   });
+
+  // Handle share button clicks
+  function handleShare(event) {
+    const button = event.currentTarget;
+    const activityName = button.dataset.activity;
+    const activityDetails = allActivities[activityName];
+    
+    if (!activityDetails) return;
+    
+    // Create shareable URL and text
+    const currentUrl = window.location.href.split('?')[0];
+    const shareUrl = `${currentUrl}?activity=${encodeURIComponent(activityName)}`;
+    const shareText = `Check out ${activityName} at Mergington High School! ${activityDetails.description}`;
+    const shareTitle = `${activityName} - Mergington High School`;
+    
+    // Determine which share button was clicked
+    if (button.classList.contains('share-facebook')) {
+      // Facebook share
+      const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+      window.open(facebookUrl, '_blank', 'width=600,height=400');
+    } else if (button.classList.contains('share-twitter')) {
+      // Twitter/X share
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, '_blank', 'width=600,height=400');
+    } else if (button.classList.contains('share-whatsapp')) {
+      // WhatsApp share
+      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(shareText + ' ' + shareUrl)}`;
+      window.open(whatsappUrl, '_blank');
+    } else if (button.classList.contains('share-email')) {
+      // Email share
+      const emailSubject = encodeURIComponent(shareTitle);
+      const emailBody = encodeURIComponent(`${shareText}\n\nLearn more: ${shareUrl}`);
+      window.location.href = `mailto:?subject=${emailSubject}&body=${emailBody}`;
+    } else if (button.classList.contains('share-copy')) {
+      // Copy link to clipboard
+      navigator.clipboard.writeText(shareUrl).then(() => {
+        showMessage('Link copied to clipboard!', 'success');
+      }).catch(() => {
+        showMessage('Failed to copy link', 'error');
+      });
+    }
+  }
 
   // Expose filter functions to window for future UI control
   window.activityFilters = {
